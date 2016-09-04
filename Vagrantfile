@@ -1,14 +1,15 @@
 VAGRANTFILE_API_VERSION = "2"
 
-nodes = ['ceph1', 'ceph2', 'ceph3', 'ceph4']
+nodes = ['ceph1', 'ceph2', 'ceph3', 'ceph4', 'ceph5']
 network = "192.168.5"
 ceph1ip = "#{network}.2"
 ceph2ip = "#{network}.3"
 ceph3ip = "#{network}.4"
 ceph4ip = "#{network}.5"
+ceph5ip = "#{network}.6"
 osd_nodes = []
 subnet=1
-domain='ceph.local'
+domain='zfx.net'
 nodes.each { |node_name|
   (1..1).each {|n|
     subnet += 1
@@ -26,7 +27,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         vb.customize ["modifyvm", :id, "--memory", "1024"]
       end
       node_config.vm.provision "shell" do |s|
-          s.inline = "echo '192.168.5.2   ceph1 ceph1.local ceph1.ceph.local' | sudo tee -a /etc/hosts"
+          s.inline = "echo '192.168.5.2   ceph1 ceph1.local ceph1.zfx.net' | sudo tee -a /etc/hosts"
       end
       if node[:hostname] != "ceph1" 
         (0..1).each do |d|
@@ -50,17 +51,20 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       end
       if node[:hostname] == "ceph4"
         node_config.vm.network "private_network", ip: "#{ceph4ip}"
+      end
+      if node[:hostname] == "ceph5"
+        node_config.vm.network "private_network", ip: "#{ceph5ip}"
         node_config.vm.provision "vai" do |ansible|
           ansible.inventory_dir = 'ansible/inventory'
           ansible.groups = {
-            'osds' => ["ceph2", "ceph3", "ceph4"],
-            'mons' => ["ceph2", "ceph3", "ceph4"],
+            'osds' => ["ceph2", "ceph3", "ceph4", "ceph5"],
+            'mons' => ["ceph2", "ceph3", "ceph4", "ceph5"],
             'mdss' => ["ceph1"],
             'rdgws' => ["ceph1"],
-            'flocker_agents' => ["ceph2", "ceph3", "ceph4"],
+            'flocker_agents' => ["ceph2", "ceph3", "ceph4", "ceph5"],
             'flocker_control_service' => ["ceph1"],
-            'flocker_docker_plugin' => ["ceph2", "ceph3", "ceph4"],
-            'flocker_ceph' => ["ceph2", "ceph3", "ceph4"],
+            'flocker_docker_plugin' => ["ceph2", "ceph3", "ceph4", "ceph5"],
+            'flocker_ceph' => ["ceph2", "ceph3", "ceph4", "ceph5"],
             'nodes:children' => ["flocker_agents", "flocker_control_service"]
           }
         end
@@ -68,14 +72,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           ansible.playbook = 'site.yml'
           ansible.limit = "all"
           ansible.groups = {
-            'osds' => ["ceph2", "ceph3", "ceph4"],
-            'mons' => ["ceph2", "ceph3", "ceph4"],
+            'osds' => ["ceph2", "ceph3", "ceph4", "ceph5"],
+            'mons' => ["ceph2", "ceph3", "ceph4", "ceph5"],
             'mdss' => ["ceph1"],
             'rdgws' => ["ceph1"],
-            'flocker_agents' => ["ceph2", "ceph3", "ceph4"],
+            'flocker_agents' => ["ceph2", "ceph3", "ceph4", "ceph5"],
             'flocker_control_service' => ["ceph1"],
-            'flocker_docker_plugin' => ["ceph2", "ceph3", "ceph4"],
-            'flocker_ceph' => ["ceph2", "ceph3", "ceph4"],
+            'flocker_docker_plugin' => ["ceph2", "ceph3", "ceph4", "ceph5"],
+            'flocker_ceph' => ["ceph2", "ceph3", "ceph4", "ceph5"],
             'nodes:children' => ["flocker_agents", "flocker_control_service", "flocker_docker_plugin", "flocker_ceph"]
           }
           ansible.extra_vars = {
